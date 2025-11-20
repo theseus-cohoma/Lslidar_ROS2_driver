@@ -1376,7 +1376,7 @@ namespace lslidar_driver
 			else
 				LslidarDriver::data_processing(packet_bytes, len);
 		}
-		delete packet_bytes;
+		delete[] packet_bytes;
 		return true;
 	}
 
