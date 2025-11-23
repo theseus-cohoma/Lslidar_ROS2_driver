@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(lslidar_driver)
 
+set(CMAKE_POLICY_DEFAULT_CMP0144 NEW)
+
 # CMake 3.25+: use uppercase <PACKAGENAME>_ROOT for find_package()
 if(POLICY CMP0144)
   cmake_policy(SET CMP0144 NEW)
