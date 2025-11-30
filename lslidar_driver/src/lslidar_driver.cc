@@ -55,25 +55,55 @@ namespace lslidar_driver
 		return;
 	}
 
+	void wrap_angle(double *angle)
+	{
+		while (*angle < 0)
+			*angle += 360;
+		while (*angle > 360)
+			*angle -= 360;
+	}
+	void normalize_angles(double *angle_disable_min, double *angle_disable_max)
+	{
+		wrap_angle(angle_disable_min);
+		wrap_angle(angle_disable_max);
+
+		if (*angle_disable_max == *angle_disable_min)
+		{
+			*angle_disable_min = 0;
+			*angle_disable_max = 360;
+			return;
+		}
+
+		if (*angle_disable_min < *angle_disable_max && *angle_disable_min != 0.0)
+		{
+			*angle_disable_min = *angle_disable_max;
+			*angle_disable_max = *angle_disable_min + 360;
+			return;
+		}
+		if (*angle_disable_min < *angle_disable_max && *angle_disable_min == 0.0)
+		{
+			*angle_disable_min = *angle_disable_max;
+			*angle_disable_max = 360;
+		}
+		
+		if (*angle_disable_min > *angle_disable_max)
+		{
+			*angle_disable_min = *angle_disable_max;
+			*angle_disable_max = *angle_disable_min;
+		}
+	
+	}
+
 	bool LslidarDriver::loadParameters()
 	{
 		pubscan_thread_ = new boost::thread(boost::bind(&LslidarDriver::pubScanThread, this));
-		interface_selection = std::string("net");
-		frame_id = std::string("laser_link");
-		scan_topic = std::string("/scan");
-		lidar_name = std::string("M10");
-		pointcloud_topic = std::string("/lslidar_point_cloud");
-		is_start = true;
-		min_range = 0.3;
-		max_range = 100.0;
-		use_gps_ts = true;
-		compensation = true;
-		pubScan = true;
-		pubPointCloud2 = true;
-		angle_disable_min = 0.0;
-		angle_disable_max = 0.0;
 
-		this->declare_parameter<std::string>("lidar_name", "M10");
+		auto descriptor = rcl_interfaces::msg::ParameterDescriptor();
+		descriptor.name = "lidar_name";
+		descriptor.description = "Lidar Model (default: M10)";
+		descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_STRING;
+
+		this->declare_parameter<std::string>("lidar_name", "M10", descriptor);
 		this->declare_parameter<std::string>("frame_id", "laser_link");
 		this->declare_parameter<std::string>("scan_topic", "/scan");
 		this->declare_parameter<std::string>("pointcloud_topic", "/lslidar_point_cloud");
@@ -260,6 +290,13 @@ namespace lslidar_driver
 			}
 		}
 		return;
+	}
+
+
+	void LslidarDriver::start_lidar(){
+		auto msg = std::make_shared<std_msgs::msg::Int8>();
+		msg->data = 1;
+		lidar_order(msg); // start lidar
 	}
 
 	void LslidarDriver::lidar_order(const std_msgs::msg::Int8::SharedPtr msg)
@@ -1230,17 +1267,18 @@ namespace lslidar_driver
 
 	bool LslidarDriver::polling()
 	{
-		if (!is_start)
+		
+		if (!is_start){
 			return true;
+		}
 		// Allocate a new shared pointer for zero-copy sharing with other nodelets.
 		unsigned char *packet_bytes = new unsigned char[500];
 		int len = 0;
 		bool difop = false;
 		if (interface_selection == "net")
-		{
+		{	
 			auto packet = lslidar_msgs::msg::LslidarPacket::UniquePtr(
-				new lslidar_msgs::msg::LslidarPacket());
-
+				new lslidar_msgs::msg::LslidarPacket());		
 			std_msgs::msg::Byte msg;
 			while (true)
 			{
@@ -1302,7 +1340,7 @@ namespace lslidar_driver
 					continue;
 				break;
 			}
-		}
+		} // interface_selection == "net"
 		else
 		{
 			if (in_file_name != "") // 读txt文件功能
@@ -1366,7 +1404,7 @@ namespace lslidar_driver
 					break;
 				}
 			}
-		}
+		} // interface_selection == "serial"
 		if (difop)
 			LslidarDriver::difop_processing(packet_bytes);
 		else

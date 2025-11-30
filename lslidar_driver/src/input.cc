@@ -245,10 +245,11 @@ namespace lslidar_driver
         struct pollfd fds[1];
         fds[0].fd = sockfd_;
         fds[0].events = POLLIN;
-        static const int POLL_TIMEOUT = 2000; // one second (in msec)
+        static const int POLL_TIMEOUT = 2'000; // in msec
 
         sockaddr_in sender_address{};
         socklen_t sender_address_len = sizeof(sender_address);
+        
         while (flag == 1)
         {
             // poll() until input available

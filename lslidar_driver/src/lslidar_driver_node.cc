@@ -25,11 +25,13 @@ int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<lslidar_driver::LslidarDriver>();
-  
+
+  node->start_lidar();
+
   while (rclcpp::ok() && node->polling()) {
-        rclcpp::spin_some(node);
+    rclcpp::spin_some(node);
   }
-  //rclcpp::spin(node);
+
   rclcpp::shutdown();
   return 0;
 }

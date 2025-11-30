@@ -62,6 +62,8 @@ public:
 	LslidarDriver(const rclcpp::NodeOptions& options);
 	~LslidarDriver();
 
+    void start_lidar();
+
     bool initialize();
     bool polling();
 
