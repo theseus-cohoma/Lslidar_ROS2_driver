@@ -1,10 +1,11 @@
-name: Modelibot
+name: lslidar
 
 services:
-  modelibot_container:
+  lslidar_container:
     image: ros_lslidar
     build:
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: Dockerfile
       args:
         USERNAME: ${_ROS_USER:?Please set an .env file with _ROS_USER}
     privileged: true
@@ -21,7 +22,8 @@ services:
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
       #FASTRTPS_DEFAULT_PROFILES_FILE=/home/$_ROS_USER/fastdds_default_profiles.xml
     volumes:
-      - ./:/home/$_ROS_USER/ws/src:cached
+      - ./lslidar_driver:/home/$_ROS_USER/ws/src/lslidar_driver:cached
+      - ./lslidar_msgs:/home/$_ROS_USER/ws/src/lslidar_msgs:cached
       - /tmp/.X11-unix:/tmp/.X11-unix:cached
       - /dev/dri:/dev/dri:cached
       - ~/.Xauthority:/home/$_ROS_USER/.Xauthority
