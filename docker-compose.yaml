@@ -19,7 +19,8 @@ services:
       #FASTDDS_BUILTIN_TRANSPORTs: "LARGE_DATA"
       #ROS_SUPER_CLIENT: ${_ROS_SUPER_CLIENT:-false}
       # RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      # Zenoh: needs a router on the host (zenoh_router of modelibot, or ros2 run rmw_zenoh_cpp rmw_zenohd)
+      RMW_IMPLEMENTATION: rmw_zenoh_cpp
       #FASTRTPS_DEFAULT_PROFILES_FILE=/home/$_ROS_USER/fastdds_default_profiles.xml
     volumes:
       - ./lslidar_driver:/home/$_ROS_USER/ws/src/lslidar_driver:cached
