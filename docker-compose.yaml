@@ -13,14 +13,16 @@ services:
       DISPLAY: ${DISPLAY:-:0}
       XDG_RUNTIME_DIR: /run/user/${UID:-1000}
       ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
-      ROS_STATIC_PEERS: $_ROS_STATIC_PEERS
+      ROS_STATIC_PEERS: ${_ROS_STATIC_PEERS:-}
       ROS_DOMAIN_ID: ${_ROS_DOMAIN_ID:-0}
       #ROS_DISCOVERY_SERVER: $_DISCOVERY_SERVER_LIST
       #FASTDDS_BUILTIN_TRANSPORTs: "LARGE_DATA"
       #ROS_SUPER_CLIENT: ${_ROS_SUPER_CLIENT:-false}
       # RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      # Zenoh: needs a router on the host (zenoh_router of modelibot, or ros2 run rmw_zenoh_cpp rmw_zenohd)
-      RMW_IMPLEMENTATION: rmw_zenoh_cpp
+      # Zenoh (default) needs a router on the host: the robot's one, or the zenoh_router
+      # below (docker compose --profile router up). Robots using DDS: set _RMW_IMPLEMENTATION
+      # (e.g. rmw_cyclonedds_cpp) in .env; ROS_STATIC_PEERS is then used for discovery.
+      RMW_IMPLEMENTATION: ${_RMW_IMPLEMENTATION:-rmw_zenoh_cpp}
       #FASTRTPS_DEFAULT_PROFILES_FILE=/home/$_ROS_USER/fastdds_default_profiles.xml
     volumes:
       - ./lslidar_driver:/home/$_ROS_USER/ws/src/lslidar_driver:cached
@@ -37,3 +39,18 @@ services:
     user: $_ROS_USER
     tty: true
     #command: "ros2 launch lslidar_driver lslidar_launch.py"
+
+  # Zenoh router, for a host that has none (lidar alone on another robot):
+  #   docker compose --profile router up -d
+  # Not used on modelibot, which has its own router.
+  zenoh_router:
+    image: ros_lslidar
+    profiles: [router]
+    entrypoint: ["/entrypoint.sh"]
+    command: ros2 run rmw_zenoh_cpp rmw_zenohd
+    environment:
+      ROS_DOMAIN_ID: ${_ROS_DOMAIN_ID:-0}
+      RMW_IMPLEMENTATION: rmw_zenoh_cpp
+    network_mode: "host"
+    user: $_ROS_USER
+    restart: unless-stopped
